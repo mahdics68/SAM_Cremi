@@ -101,7 +101,7 @@ def test_unetr(args, model_weights: str, pred_dir:str):
                 raw_group = volumes_group['raw']
                 label_group = volumes_group['labels']
                 annotation_group = label_group['neuron_ids']
-                breakpoint()
+           
 
 
                 
