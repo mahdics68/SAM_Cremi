@@ -13,6 +13,9 @@ from skimage.io import imsave
 import matplotlib.pyplot as plt
 import argparse
 
+seed = 42
+torch.manual_seed(seed)
+np.random.seed(seed)
 
 def save_data(slice_number, data,sample_n, output_dir):
     filename = f"{sample_n}-{slice_number:03d}.tif"
@@ -35,7 +38,8 @@ test_loader = get_cremi_loader(
         batch_size=2,
         raw_transform = identity,
         num_workers=16,
-        shuffle=True
+        shuffle=False,
+        samples=("A", "B", "C")
     )
 
 
@@ -47,13 +51,8 @@ test_loader = get_cremi_loader(
 def test_unetr(args, model_weights: str, pred_dir:str):
 
 
-    # sample_name = ["sampleA.h5", "sampleB.h5", "sampleC.h5"]
-    # for i in sample_name:
 
        
-    
-                
-
     # Path to the directory containing the H5 files
     test_path = "/scratch-grete/usr/nimmahen/data/Cremi/test/" 
 
@@ -102,6 +101,7 @@ def test_unetr(args, model_weights: str, pred_dir:str):
                 raw_group = volumes_group['raw']
                 label_group = volumes_group['labels']
                 annotation_group = label_group['neuron_ids']
+                breakpoint()
 
 
                 
@@ -131,15 +131,13 @@ def test_unetr(args, model_weights: str, pred_dir:str):
                     # Access the slice data
                     slice_data_org = volume_data[slice_number]
                     slice_gt = gt_data[slice_number]
-                    #slice_data = torch_em.transform.raw.standardize(slice_data_org) ### no need for pretrain
-                    #slice_data = slice_data_org.astype(np.float32)
-                    slice_data = slice_data_org
-
+                    slice_data = slice_data_org.astype(np.float32)
                 
-                    
+                  
+    
                     # Assuming you generate prediction_data for each slice
                     predictions = predict_with_halo(slice_data, model, gpu_ids=[device], block_shape=(256,256), halo = (128,128),preprocess=None)
-                    #boundaries = predictions[1,:,:]
+                    
                     
                     
                     # Save images, labels, and predictions
@@ -166,7 +164,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--encoder", default="vit_b")
     parser.add_argument("--backbone")
-    #parser.add_argument("--use_sam_stats", action="store_true")
     parser.add_argument("--model_weights")
     parser.add_argument("--base_dir", default="/scratch-grete/usr/nimmahen/models/UNETR/sam/prediction/")
     parser.add_argument("--pred_dir", required=True)
@@ -174,3 +171,4 @@ if __name__ == '__main__':
     main(args)
                         
 ###--encoder "vit_b" --backbone "sam" --model_weights /scratch-grete/usr/nimmahen/models/UNETR/sam/checkpoints/cremi_10_vit_b/checkpoints/unetr-cremi/best.pt --pred_dir cremi_10_vit_b
+#/scratch-grete/usr/nimmahen/models/UNETR/sam/checkpoints/new_cremi_10persample_vit_b/checkpoints/unetr-cremi/best.pt
