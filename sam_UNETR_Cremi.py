@@ -6,6 +6,8 @@ import torch
 import torch_em
 from torch_em.model import UNETR
 from torch_em.data.datasets import get_cremi_loader, get_cremi_dataset
+from torch_em.data import ConcatDataset
+
 
 
 
@@ -13,41 +15,116 @@ def identity(raw):
         return raw
 
 
-def do_unetr_training(data_path: str, save_root: str, iterations: int, device, patch_shape=(1, 512, 512)):
+def do_unetr_training(args, data_path: str, save_root: str, iterations: int, device, patch_shape=(1, 512, 512)):
     os.makedirs(data_path, exist_ok=True)
 
-    cremi_train_rois = {"A": np.s_[0:75, :, :], "B": np.s_[0:75, :, :], "C": np.s_[0:75, :, :]}
-    cremi_val_rois = {"A": np.s_[75:100, :, :], "B": np.s_[75:100, :, :], "C": np.s_[75:100, :, :]}
+    
 
-    train_loader = get_cremi_loader(
-        path=data_path,
-        patch_shape=patch_shape,
-        download=True,
-        rois=cremi_train_rois,
-        ndim=2,
-        defect_augmentation_kwargs=None,
-        boundaries=True,
-        batch_size=2,
-        raw_transform = identity,
-        num_workers=16,
-        shuffle=True,
-        n_samples=args.n_samples
+    cremi_train_rois_A = {"A": np.s_[0:75, :, :]}
+    cremi_train_rois_B = {"B": np.s_[0:75, :, :]}
+    cremi_train_rois_C = {"C": np.s_[0:75, :, :]}
+
+
+
+    cremi_train_dataset_A= get_cremi_dataset(
+            path=data_path,
+            patch_shape=patch_shape,
+            download=True,
+            rois=cremi_train_rois_A,
+            ndim=2,
+            defect_augmentation_kwargs=None,
+            boundaries=True,
+            raw_transform = identity,
+            n_samples=args.n_samples,
+            samples=("A")
+
     )
 
-    val_loader = get_cremi_loader(
-        path=data_path,
-        patch_shape=patch_shape,
-        download=True,
-        rois=cremi_val_rois,
-        ndim=2,
-        defect_augmentation_kwargs=None,
-        boundaries=True,
-        batch_size=1,
-        raw_transform = identity,
-        num_workers=16,
-        shuffle=True,
+    cremi_train_dataset_B= get_cremi_dataset(
+            path=data_path,
+            patch_shape=patch_shape,
+            download=True,
+            rois=cremi_train_rois_B,
+            ndim=2,
+            defect_augmentation_kwargs=None,
+            boundaries=True,
+            raw_transform = identity,
+            n_samples=args.n_samples,
+            samples=("B")
+
     )
 
+    cremi_train_dataset_C= get_cremi_dataset(
+            path=data_path,
+            patch_shape=patch_shape,
+            download=True,
+            rois=cremi_train_rois_C,
+            ndim=2,
+            defect_augmentation_kwargs=None,
+            boundaries=True,
+            raw_transform = identity,
+            n_samples=args.n_samples,
+            samples=("C")
+
+    )
+
+    cremi_train_dataset = ConcatDataset(cremi_train_dataset_A, cremi_train_dataset_B, cremi_train_dataset_C)
+    train_loader = torch_em.get_data_loader(cremi_train_dataset, batch_size = 2, num_workers=16,shuffle=True)
+    
+
+
+    cremi_val_rois_A = {"A": np.s_[75:100, :, :]}
+    cremi_val_rois_B = {"B": np.s_[75:100, :, :]}
+    cremi_val_rois_C = {"C": np.s_[75:100, :, :]}
+
+
+
+    cremi_val_dataset_A= get_cremi_dataset(
+            path=data_path,
+            patch_shape=patch_shape,
+            download=True,
+            rois=cremi_val_rois_A,
+            ndim=2,
+            defect_augmentation_kwargs=None,
+            boundaries=True,
+            raw_transform = identity,
+            samples=("A")
+
+    )
+
+    cremi_val_dataset_B= get_cremi_dataset(
+            path=data_path,
+            patch_shape=patch_shape,
+            download=True,
+            rois=cremi_val_rois_B,
+            ndim=2,
+            defect_augmentation_kwargs=None,
+            boundaries=True,
+            raw_transform = identity,
+            samples=("B")
+
+    )
+
+    cremi_val_dataset_C= get_cremi_dataset(
+            path=data_path,
+            patch_shape=patch_shape,
+            download=True,
+            rois=cremi_val_rois_C,
+            ndim=2,
+            defect_augmentation_kwargs=None,
+            boundaries=True,
+            raw_transform = identity,
+            samples=("C")
+
+    )
+
+    cremi_val_dataset = ConcatDataset(cremi_val_dataset_A, cremi_val_dataset_B, cremi_val_dataset_C)
+    val_loader = torch_em.get_data_loader(cremi_val_dataset, batch_size = 1, num_workers=16,shuffle=True)
+
+
+    
+
+    
     model = UNETR(
         backbone=args.backbone, encoder=args.encoder, out_channels=1, use_sam_stats=True,
         encoder_checkpoint=args.checkpoint, final_activation="Sigmoid",
@@ -78,6 +155,7 @@ def main(args):
     if args.train:
         print("Training a 2D UNETR on Cremi dataset")
         do_unetr_training(
+            args,
             data_path=args.inputs,
             save_root=args.save_root,
             iterations=args.iterations,
@@ -100,4 +178,4 @@ if __name__ == "__main__":
     args = parser.parse_args()
     main(args)
 
-#--train --inputs /scratch-grete/usr/nimmahen/data/Cremi --save_root /scratch-grete/usr/nimmahen/models/UNETR/sam/checkpoints/cremi_10_vit_b --checkpoint /scratch-grete/usr/nimmahen/models/SAM/checkpoints/sam_vit_b_01ec64.pth --iterations 10000 --encoder "vit_b" --backbone "sam" --n_samples 10
+#--train --inputs /scratch-grete/usr/nimmahen/data/Cremi --save_root /scratch-grete/usr/nimmahen/models/UNETR/sam/checkpoints/new_cremi_10persample_vit_b --checkpoint /scratch-grete/usr/nimmahen/models/SAM/checkpoints/sam_vit_b_01ec64.pth --iterations 10000 --encoder "vit_b" --backbone "sam" --n_samples 10
