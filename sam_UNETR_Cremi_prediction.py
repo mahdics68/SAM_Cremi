@@ -28,7 +28,7 @@ def identity(raw):
 cremi_test_rois = {"A": np.s_[100:125, :, :], "B": np.s_[100:125, :, :], "C": np.s_[100:125, :, :]}
 
 test_loader = get_cremi_loader(
-        path="/scratch-grete/usr/nimmahen/data/Cremi/test/",
+        path="/scratch-grete/usr/nimmahen/data/Cremi/",
         patch_shape=(1, 512, 512),
         download=True,
         rois=cremi_test_rois,
@@ -54,7 +54,7 @@ def test_unetr(args, model_weights: str, pred_dir:str):
 
        
     # Path to the directory containing the H5 files
-    test_path = "/scratch-grete/usr/nimmahen/data/Cremi/test/" 
+    test_path = "/scratch-grete/usr/nimmahen/data/Cremi/" 
 
 
     # List all the H5 files in the train_path directory
@@ -101,7 +101,6 @@ def test_unetr(args, model_weights: str, pred_dir:str):
                 raw_group = volumes_group['raw']
                 label_group = volumes_group['labels']
                 annotation_group = label_group['neuron_ids']
-           
 
 
                 
@@ -120,10 +119,10 @@ def test_unetr(args, model_weights: str, pred_dir:str):
                 os.makedirs(output_dir, exist_ok=True)
                         
 
-                test_image_dir = "/scratch-grete/usr/nimmahen/data/Cremi/test/test_image/"
+                test_image_dir = "/scratch-grete/usr/nimmahen/data/Cremi/test_image/"
                 os.makedirs(test_image_dir, exist_ok=True)
 
-                test_label_dir = "/scratch-grete/usr/nimmahen/data/Cremi/test/test_label/"
+                test_label_dir = "/scratch-grete/usr/nimmahen/data/Cremi/test_label/"
                 os.makedirs(test_label_dir, exist_ok=True)
                 
                 # Loop through the slices and save data with generic nomenclature
@@ -133,6 +132,7 @@ def test_unetr(args, model_weights: str, pred_dir:str):
                     slice_gt = gt_data[slice_number]
                     slice_data = slice_data_org.astype(np.float32)
                 
+                
                   
     
                     # Assuming you generate prediction_data for each slice
@@ -141,9 +141,11 @@ def test_unetr(args, model_weights: str, pred_dir:str):
                     
                     
                     # Save images, labels, and predictions
-                    save_data(slice_number, slice_data_org, sample_n, test_image_dir)
-                    save_data(slice_number, slice_gt, sample_n, test_label_dir)  # Replace with your ground truth data
+                    # save_data(slice_number, slice_data_org, sample_n, test_image_dir)
+                    # save_data(slice_number, slice_gt, sample_n, test_label_dir)  # Replace with your ground truth data
                     save_data(slice_number, predictions, sample_n ,  output_dir)
+                    
+                
                 
                     
 
